@@ -95,7 +95,7 @@ class AuthMePE extends PluginBase implements Listener{
 		  $this->getLogger()->notice("Server will be shutdown due to security reason as AuthMePE is disabled!");
 		  $this->getServer()->shutdown();
 		}
-		$this->getLogger()->info(TextFormat::GREEN."Loaded Successfully!");
+		$this->getLogger()->info(TextFormat::GREEN."加载成功!");
 	}
 	
 	public static function getInstance(){
@@ -164,6 +164,7 @@ class AuthMePE extends PluginBase implements Listener{
 		}
 		
 		$this->getLogger()->info("Player ".$player->getName()." has logged in.");
+        $this->getLogger()->info("玩家 ".$player->getName()." 登录了游戏。");
 		
 		$c = $this->configFile()->getAll();
 		$t = $this->data->getAll();
@@ -174,8 +175,10 @@ class AuthMePE extends PluginBase implements Listener{
 		$this->login[$player->getName()] = $player->getName();
 		
 		$this->getServer()->broadcastMessage("- §l§b".$player->getName()." §r§eis now online!");
-		
-		if($c["vanish-nonloggedin-players"] !== false){
+        $this->getServer()->broadcastMessage("- §l§b".$player->getName()." §r§e现在上线了!");
+
+
+        if($c["vanish-nonloggedin-players"] !== false){
 		  foreach($this->getServer()->getOnlinePlayers() as $p){
 		    $p->showPlayer($player);
 		    $player->sendPopup("§7You are now visible");
@@ -199,7 +202,9 @@ class AuthMePE extends PluginBase implements Listener{
 		if(md5($password.$this->salt($password)) != $t[$player->getName()]["password"]){
 		  
 			$player->sendMessage(TextFormat::RED."Wrong password!");
-			$times = $t[$player->getName()]["times"];
+            $player->sendMessage(TextFormat::RED."错误的密码!");
+
+            $times = $t[$player->getName()]["times"];
 			$left = $c["tries-allowed-to-enter-password"] - $times;
 			if($times < $c["tries-allowed-to-enter-password"]){
 			  $player->sendMessage("§eYou have §l§c".$left." §r§etries left!");
@@ -227,7 +232,9 @@ class AuthMePE extends PluginBase implements Listener{
 		
 		$this->auth($player, 0);
 		$player->sendMessage(TextFormat::GREEN."You are now logged in.");
-	}
+        $player->sendMessage(TextFormat::GREEN."你已经登录。.");
+
+    }
 	
 	public function logout(Player $player){
 		
@@ -239,7 +246,9 @@ class AuthMePE extends PluginBase implements Listener{
 		
 		if(!$this->isLoggedIn($player)){
 			$player->sendMessage(TextFormat::YELLOW."You are not logged in!");
-			return false;
+            $player->sendMessage(TextFormat::YELLOW."你还没有登录!");
+
+            return false;
 		}
 		
 		 $player->setHealth($player->getHealth() - 1);
@@ -247,15 +256,20 @@ class AuthMePE extends PluginBase implements Listener{
 		 $this->getServer()->getScheduler()->scheduleDelayedTask(new SoundTask($this, $player, 2), 7);
 		 
 		 $this->getServer()->broadcastMessage("- §l§b".$player->getName()." §r§cis now offline!");
-		 
-		 $this->getLogger()->info("Player ".$player->getName()." has logged out.");
-		 
-		 $c = $this->configFile()->getAll();
+         $this->getServer()->broadcastMessage("- §l§b".$player->getName()." §r§c离开了游戏!");
+
+        $this->getLogger()->info("Player ".$player->getName()." has logged out.");
+        $this->getLogger()->info("Player ".$player->getName()." 离开了游戏.");
+
+
+        $c = $this->configFile()->getAll();
 		 if($c["vanish-nonloggedin-players"] !== false){
 		   foreach($this->getServer()->getOnlinePlayers() as $p){
 		     $p->hidePlayer($player);
 		     $player->sendPopup("§7You are now invisible");
-		   }
+		     $player->sendPopup("§7你已经隐身");
+
+           }
 		 }else{
 		   
 		 }
@@ -343,7 +357,9 @@ class AuthMePE extends PluginBase implements Listener{
 				if($m{0} == "/"){
 					$event->getPlayer()->sendTip("§cYou are not allowed to execute commands now!");
 					$event->getPlayer()->sendMessage("§fPlease login by typing your password into chat!");
-					$event->setCancelled(true);
+                    $event->getPlayer()->sendMessage("§f请在您的聊天栏里输入密码登录!");
+
+                    $event->setCancelled(true);
 				}else{
 			  	$this->login($event->getPlayer(), $event->getMessage());
 			  }
@@ -351,13 +367,19 @@ class AuthMePE extends PluginBase implements Listener{
 			}else{
 				if(!isset($t[$event->getPlayer()->getName()]["password"])){
 					if(strlen($event->getMessage()) < $this->configFile()->get("min-password-length")){
-			     $event->getPlayer()->sendMessage("§cThe password is too short!\n§cIt shouldn't contain less than §b".$this->configFile()->get("min-password-length")." §ccharacters");
-			    }else if(strlen($event->getMessage()) > $this->configFile()->get("max-password-length")){
-			      $event->getPlayer()->sendMessage("§cThe password is too long!\n§cIt shouldn't contain more than §b".$this->configFile()->get("max-password-length")." §ccharacters");
-			    }else{
+			            $event->getPlayer()->sendMessage("§cThe password is too short!\n§cIt shouldn't contain less than §b".$this->configFile()->get("min-password-length")." §ccharacters");
+                        $event->getPlayer()->sendMessage("§c这个密码太短了!\n§c它至少需要 §b".$this->configFile()->get("min-password-length")." §c个字符");
+
+                    }else if(strlen($event->getMessage()) > $this->configFile()->get("max-password-length")){
+			            $event->getPlayer()->sendMessage("§cThe password is too long!\n§cIt shouldn't contain more than §b".$this->configFile()->get("max-password-length")." §ccharacters");
+                        $event->getPlayer()->sendMessage("§c这个密码太长了!\n§c它最多只能有 §b".$this->configFile()->get("max-password-length")." §c个字符");
+
+                    }else{
      			$this->register($event->getPlayer(), $event->getMessage());
-					  $event->getPlayer()->sendMessage(TextFormat::YELLOW."Type your password again to confirm.");
-     		}
+					    $event->getPlayer()->sendMessage(TextFormat::YELLOW."Type your password again to confirm.");
+                        $event->getPlayer()->sendMessage(TextFormat::YELLOW."请再次输入密码进行确认.");
+
+                    }
 					$event->setCancelled(true);
 				}
 				if(!isset($t[$event->getPlayer()->getName()]["confirm"]) && isset($t[$event->getPlayer()->getName()]["password"])){
@@ -366,19 +388,25 @@ class AuthMePE extends PluginBase implements Listener{
 					$this->data->save();
 					if(md5($event->getMessage().$this->salt($event->getMessage())) != $t[$event->getPlayer()->getName()]["password"]){
 						$event->getPlayer()->sendMessage(TextFormat::YELLOW."Confirm password ".TextFormat::RED."INCORRECT".TextFormat::YELLOW."!\n".TextFormat::WHITE."Please type your password in chat to start register.");
-						$event->setCancelled(true);
+                        $event->getPlayer()->sendMessage(TextFormat::YELLOW."确认密码 ".TextFormat::RED."不确认".TextFormat::YELLOW."!\n".TextFormat::WHITE."请在聊天栏里输入你想用的密码开始注册.");
+
+                        $event->setCancelled(true);
 						unset($t[$event->getPlayer()->getName()]);
 						$this->data->setAll($t);
 						$this->data->save();
 					}else{
 						$event->getPlayer()->sendMessage(TextFormat::WHITE."Confirm password ".TextFormat::GREEN."CORRECT".TextFormat::YELLOW."!\n".TextFormat::WHITE."Your password is '".TextFormat::AQUA.TextFormat::BOLD.$event->getMessage().TextFormat::WHITE.TextFormat::RESET."'");
-						$event->setCancelled(true);
+                        $event->getPlayer()->sendMessage(TextFormat::WHITE."确认密码 ".TextFormat::GREEN."确认".TextFormat::YELLOW."!\n".TextFormat::WHITE."你的密码是 '".TextFormat::AQUA.TextFormat::BOLD.$event->getMessage().TextFormat::WHITE.TextFormat::RESET."'");
+
+                        $event->setCancelled(true);
 					}
 				}
 				if(!$this->isRegistered($event->getPlayer()) && isset($t[$event->getPlayer()->getName()]["confirm"]) && isset($t[$event->getPlayer()->getName()]["password"])){
 					if($event->getMessage() != "yes" && $event->getMessage() != "no"){
 					   $event->getPlayer()->sendMessage(TextFormat::YELLOW."If you want to login with your every last joined ip everytime, type '".TextFormat::WHITE."yes".TextFormat::YELLOW."'. Else, type '".TextFormat::WHITE."no".TextFormat::YELLOW."'");
-					   $event->setCancelled(true);
+					   $event->getPlayer()->sendMessage(TextFormat::YELLOW."如果你想以后使用相同IP登录不用输入密码, 请输入 '".TextFormat::WHITE."yes".TextFormat::YELLOW."'. 如果不想, 请输入 '".TextFormat::WHITE."no".TextFormat::YELLOW."'");
+
+                        $event->setCancelled(true);
 					}else{
 						 $t[$event->getPlayer()->getName()]["ip"] = $event->getMessage();
 						 unset($t[$event->getPlayer()->getName()]["confirm"]);
@@ -386,7 +414,9 @@ class AuthMePE extends PluginBase implements Listener{
 						 $this->data->setAll($t);
 						 $this->data->save();
 						 $event->getPlayer()->sendMessage(TextFormat::GREEN."You are now registered!\n".TextFormat::YELLOW."Type your password in chat to login.");
-						 $time = $this->configFile()->get("login-timeout");
+                         $event->getPlayer()->sendMessage(TextFormat::GREEN."你已经注册!\n".TextFormat::YELLOW."现在，请在聊天栏输入一次密码第一次登录.");
+
+                        $time = $this->configFile()->get("login-timeout");
 						 $this->getServer()->getScheduler()->scheduleDelayedTask(new Task2($this, $event->getPlayer()), ($time * 20));
 						 $event->setCancelled(true);
 					}
@@ -414,30 +444,46 @@ class AuthMePE extends PluginBase implements Listener{
 			if($this->isSessionAvailable($event->getPlayer()) && $event->getPlayer()->getAddress() == $this->ip->get($event->getPlayer()->getName())){
 				 $this->auth($event->getPlayer(), 3);
 				 $event->getPlayer()->sendMessage("§6Session Available!\n§aYou are now logged in.");
-			}else if($t[$event->getPlayer()->getName()]["ip"] == "yes"){
+                 $event->getPlayer()->sendMessage("§6会话可用!\n§a你已经登录.");
+
+            }else if($t[$event->getPlayer()->getName()]["ip"] == "yes"){
 				if($event->getPlayer()->getAddress() == $this->ip->get($event->getPlayer()->getName())){
 					$this->auth($event->getPlayer(), 1);
 					$event->getPlayer()->sendMessage("§2We remember you by your §6IP §2address!\n".TextFormat::GREEN."You are now logged in.");
-				}else{
+                    $event->getPlayer()->sendMessage("§2我们记住了你的 §6IP §2地址!\n".TextFormat::GREEN."你已经登录.");
+
+                }else{
 					$event->getPlayer()->sendMessage(TextFormat::WHITE."Please type your password in chat to login.");
-					$this->ip->set($event->getPlayer()->getName(), $event->getPlayer()->getAddress());
+                    $event->getPlayer()->sendMessage(TextFormat::WHITE."请在聊天栏输入你的密码登录.");
+
+                    $this->ip->set($event->getPlayer()->getName(), $event->getPlayer()->getAddress());
 				  $this->ip->save();
 					$event->getPlayer()->sendPopup(TextFormat::GOLD."Welcome ".TextFormat::AQUA.$event->getPlayer()->getName().TextFormat::GREEN."\nPlease login to play!");
-					$this->getServer()->getScheduler()->scheduleDelayedTask(new Task2($this, $event->getPlayer()), (15 * 20));
+                    $event->getPlayer()->sendPopup(TextFormat::GOLD."欢迎 ".TextFormat::AQUA.$event->getPlayer()->getName().TextFormat::GREEN."\n请登录进行游戏!");
+
+                    $this->getServer()->getScheduler()->scheduleDelayedTask(new Task2($this, $event->getPlayer()), (15 * 20));
 				}
 			}else if($event->getPlayer()->hasPermission("authmepe.login.bypass")){
 					$this->auth($event->getPlayer(), 2);
 					$event->getPlayer()->sendMessage("§6You logged in with permission!\n§aYou are now logged in.");
-			}else{
+                    $event->getPlayer()->sendMessage("§6您有权限登录!\n§a你已经登录.");
+
+            }else{
 				$event->getPlayer()->sendMessage(TextFormat::WHITE."Please type your password in chat to login.");
-				$this->getServer()->getScheduler()->scheduleDelayedTask(new Task2($this, $event->getPlayer()), (30 * 20));
+                $event->getPlayer()->sendMessage(TextFormat::WHITE."请在聊天栏输入你的密码登录.");
+
+                $this->getServer()->getScheduler()->scheduleDelayedTask(new Task2($this, $event->getPlayer()), (30 * 20));
 				$this->ip->set($event->getPlayer()->getName(), $event->getPlayer()->getAddress());
 				$this->ip->save();
 				$event->getPlayer()->sendPopup(TextFormat::GOLD."Welcome ".TextFormat::AQUA.$event->getPlayer()->getName().TextFormat::GREEN."\nPlease login to play!");
-			}
+                $event->getPlayer()->sendPopup(TextFormat::GOLD."欢迎 ".TextFormat::AQUA.$event->getPlayer()->getName().TextFormat::GREEN."\n请登录进行游戏!");
+
+            }
 		}else{
 			$event->getPlayer()->sendMessage("Please type your password in chat to start register.");
-		}
+            $event->getPlayer()->sendMessage("请在聊天栏里输入你想用的密码开始注册.");
+
+        }
 	}
 	
 	public function onPlayerMove(PlayerMoveEvent $event){
@@ -447,13 +493,19 @@ class AuthMePE extends PluginBase implements Listener{
 				$event->setCancelled(true);
 			}else if(isset($t[$event->getPlayer()->getName()]["password"]) && !isset($t[$event->getPlayer()->getName()]["confirm"])){
 				$event->getPlayer()->sendMessage("Please type your email into chat!");
-				$event->setCancelled(true);
+                $event->getPlayer()->sendMessage("请在聊天栏里输入你的电子邮件!");
+
+                $event->setCancelled(true);
 			}else if(!$this->isRegistered($event->getPlayer()) && isset($t[$event->getPlayer()->getName()]["confirm"])){
 				$event->getPlayer()->sendMessage("Please type yes/no into chat!");
-				$event->setCancelled(true);
+                $event->getPlayer()->sendMessage("请在聊天栏输入yes或no!");
+
+                $event->setCancelled(true);
 			}else if(!isset($t[$event->getPlayer()->getName()])){
 				$event->getPlayer()->sendMessage("Please type your new password into chat to register.");
-				$event->setCancelled(true);
+                $event->getPlayer()->sendMessage("请在聊天栏里输入你的新密码进行注册.");
+
+                $event->setCancelled(true);
 			}
 		}
 	}
@@ -533,15 +585,19 @@ class AuthMePE extends PluginBase implements Listener{
 			  			  		$issuer->sendMessage("§aYou changed §d".$target."§a's password to §b§l".$args[2]);
 			  			  		if($this->isLoggedIn($this->getServer()->getPlayer($target))){
 			  			  			$this->logout($this->getServer()->getPlayer($target));
-			  			  			$this->getServer()->getPlayer($target)->sendMessage("§4Your password had been changed by admin!");
-			  			  		}
+			  			  			$this->getServer()->getPlayer($target)->sendMessage("§4Your password has been changed by admin!");
+                                    $this->getServer()->getPlayer($target)->sendMessage("§4你的密码被管理员强制更改!");
+
+                                }
 			  			  		return true;
 			  			  	}else{
 			  			  		$issuer->sendMessage("$target is not registered!");
-			  			  		return true;
+                                $issuer->sendMessage("$target 没有注册!");
+
+                                return true;
 			  			  	}
 			  			  }else{
-			  			    $this->sendCommandUsage($issuer, "/authme changepass <player> <password>");
+			  			    $this->sendCommandUsage($issuer, "/authme changepass <player> <password>，/authme changepass <玩家> <密码>");
 			  			  	return true;
 			  			  }
 			  			break;
