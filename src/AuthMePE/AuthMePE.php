@@ -151,11 +151,15 @@ class AuthMePE extends PluginBase implements Listener{
 	public function isLoggedIn(Player $player){
 		return in_array($player->getName(), $this->login);
 	}
-	
+
+	//$player->getName() 获取的用户名含有大小写，存到表格时，还是含有大小写，那么捣乱者只需要改变一下大小写，就不能在这个表格中查到数据，从而判断这个用户名未注册。
+	//解决办法是，这个用户名必须全部小写后保存到表格，查表时，也全部要先小写，这样就能保证一致性。
 	public function isRegistered(Player $player){
 		$t = $this->data->getAll();
-		return isset($t[$player->getName()]["ip"]);
+		return isset($t[strtolower($player->getName())]["ip"]);
 	}
+
+
 	
 	public function auth(Player $player, $method){	
 		$this->getServer()->getPluginManager()->callEvent($event = new PlayerAuthEvent($this, $player, $method));
@@ -168,7 +172,7 @@ class AuthMePE extends PluginBase implements Listener{
 		
 		$c = $this->configFile()->getAll();
 		$t = $this->data->getAll();
-		if($c["email"]["remind-players-add-email"] !== false && !isset($t[$player->getName()]["email"])){
+		if($c["email"]["remind-players-add-email"] !== false && !isset($t[strtolower($player->getName())]["email"])){
 			$player->sendMessage("§dYou have not added your email!\nAdd it by using command §6/chgemail <email>");
 		}
 		
@@ -199,21 +203,21 @@ class AuthMePE extends PluginBase implements Listener{
 	public function login(Player $player, $password){
 		$t = $this->data->getAll();
 		$c = $this->configFile()->getAll();
-		if(md5($password.$this->salt($password)) != $t[$player->getName()]["password"]){
+		if(md5($password.$this->salt($password)) != $t[strtolower($player->getName())]["password"]){
 		  
 			$player->sendMessage(TextFormat::RED."Wrong password!");
             $player->sendMessage(TextFormat::RED."错误的密码!");
 
-            $times = $t[$player->getName()]["times"];
+            $times = $t[strtolower($player->getName())]["times"];
 			$left = $c["tries-allowed-to-enter-password"] - $times;
 			if($times < $c["tries-allowed-to-enter-password"]){
 			  $player->sendMessage("§eYou have §l§c".$left." §r§etries left!");
-			  $t[$player->getName()]["times"] = $times + 1;
+			  $t[strtolower($player->getName())]["times"] = $times + 1;
 			  $this->data->setAll($t);
 			  $this->data->save();
 			}else{
 			  $player->kick("\n§cMax amount of tries reached!\n§eTry again §d".$c["tries-allowed-to-enter-password"]." §eminutes later.");
-			  $t[$player->getName()]["times"] = 0;
+			  $t[strtolower($player->getName())]["times"] = 0;
 			  $this->data->setAll($t);
 			  $this->data->save();
 			  $this->ban($player->getName());
@@ -224,15 +228,15 @@ class AuthMePE extends PluginBase implements Listener{
 			return false;
 		}
 		
-		if($t[$player->getName()]["times"] !== 0){
-		  $t[$player->getName()]["times"] = 0;
+		if($t[strtolower($player->getName())]["times"] !== 0){
+		  $t[strtolower($player->getName())]["times"] = 0;
 		  $this->data->setAll($t);
 		  $this->data->save();
 		}
 		
 		$this->auth($player, 0);
 		$player->sendMessage(TextFormat::GREEN."You are now logged in.");
-        $player->sendMessage(TextFormat::GREEN."你已经登录。.");
+        $player->sendMessage(TextFormat::GREEN."你已经登录。");
 
     }
 	
@@ -284,8 +288,8 @@ class AuthMePE extends PluginBase implements Listener{
 			return false;
 		}
 		$t = $this->data->getAll();
-		$t[$player->getName()]["password"] = md5($pw1.$this->salt($pw1));
-		$t[$player->getName()]["times"] = 0;
+		$t[strtolower($player->getName())]["password"] = md5($pw1.$this->salt($pw1));
+		$t[strtolower($player->getName())]["times"] = 0;
 		$this->data->setAll($t);
 		$this->data->save();
 	}
@@ -330,7 +334,7 @@ class AuthMePE extends PluginBase implements Listener{
 	
 	public function getPlayerEmail($name){
 		$t = $this->data->getAll();
-	  return $t[$name]["email"];
+	  return $t[strtolower($name)]["email"];
 	}
 	
 	public function getToken(){
@@ -365,7 +369,7 @@ class AuthMePE extends PluginBase implements Listener{
 			  }
 				$event->setCancelled(true);
 			}else{
-				if(!isset($t[$event->getPlayer()->getName()]["password"])){
+				if(!isset($t[strtolower($event->getPlayer()->getName())]["password"])){
 					if(strlen($event->getMessage()) < $this->configFile()->get("min-password-length")){
 			            $event->getPlayer()->sendMessage("§cThe password is too short!\n§cIt shouldn't contain less than §b".$this->configFile()->get("min-password-length")." §ccharacters");
                         $event->getPlayer()->sendMessage("§c这个密码太短了!\n§c它至少需要 §b".$this->configFile()->get("min-password-length")." §c个字符");
@@ -382,11 +386,11 @@ class AuthMePE extends PluginBase implements Listener{
                     }
 					$event->setCancelled(true);
 				}
-				if(!isset($t[$event->getPlayer()->getName()]["confirm"]) && isset($t[$event->getPlayer()->getName()]["password"])){
-					$t[$event->getPlayer()->getName()]["confirm"] = $event->getMessage();
+				if(!isset($t[strtolower($event->getPlayer()->getName())]["confirm"]) && isset($t[strtolower($event->getPlayer()->getName())]["password"])){
+					$t[strtolower($event->getPlayer()->getName())]["confirm"] = $event->getMessage();
 					$this->data->setAll($t);
 					$this->data->save();
-					if(md5($event->getMessage().$this->salt($event->getMessage())) != $t[$event->getPlayer()->getName()]["password"]){
+					if(md5($event->getMessage().$this->salt($event->getMessage())) != $t[strtolower($event->getPlayer()->getName())]["password"]){
 						$event->getPlayer()->sendMessage(TextFormat::YELLOW."Confirm password ".TextFormat::RED."INCORRECT".TextFormat::YELLOW."!\n".TextFormat::WHITE."Please type your password in chat to start register.");
                         $event->getPlayer()->sendMessage(TextFormat::YELLOW."确认密码 ".TextFormat::RED."不确认".TextFormat::YELLOW."!\n".TextFormat::WHITE."请在聊天栏里输入你想用的密码开始注册.");
 
@@ -401,15 +405,15 @@ class AuthMePE extends PluginBase implements Listener{
                         $event->setCancelled(true);
 					}
 				}
-				if(!$this->isRegistered($event->getPlayer()) && isset($t[$event->getPlayer()->getName()]["confirm"]) && isset($t[$event->getPlayer()->getName()]["password"])){
+				if(!$this->isRegistered($event->getPlayer()) && isset($t[strtolower($event->getPlayer()->getName())]["confirm"]) && isset($t[strtolower($event->getPlayer()->getName())]["password"])){
 					if($event->getMessage() != "yes" && $event->getMessage() != "no"){
 					   $event->getPlayer()->sendMessage(TextFormat::YELLOW."If you want to login with your every last joined ip everytime, type '".TextFormat::WHITE."yes".TextFormat::YELLOW."'. Else, type '".TextFormat::WHITE."no".TextFormat::YELLOW."'");
 					   $event->getPlayer()->sendMessage(TextFormat::YELLOW."如果你想以后使用相同IP登录不用输入密码, 请输入 '".TextFormat::WHITE."yes".TextFormat::YELLOW."'. 如果不想, 请输入 '".TextFormat::WHITE."no".TextFormat::YELLOW."'");
 
                         $event->setCancelled(true);
 					}else{
-						 $t[$event->getPlayer()->getName()]["ip"] = $event->getMessage();
-						 unset($t[$event->getPlayer()->getName()]["confirm"]);
+						 $t[strtolower($event->getPlayer()->getName())]["ip"] = $event->getMessage();
+						 unset($t[strtolower($event->getPlayer()->getName())]["confirm"]);
 						 $this->ip->set($event->getPlayer()->getName(), $event->getPlayer()->getAddress());
 						 $this->data->setAll($t);
 						 $this->data->save();
@@ -446,7 +450,7 @@ class AuthMePE extends PluginBase implements Listener{
 				 $event->getPlayer()->sendMessage("§6Session Available!\n§aYou are now logged in.");
                  $event->getPlayer()->sendMessage("§6会话可用!\n§a你已经登录.");
 
-            }else if($t[$event->getPlayer()->getName()]["ip"] == "yes"){
+            }else if($t[strtolower($event->getPlayer()->getName())]["ip"] == "yes"){
 				if($event->getPlayer()->getAddress() == $this->ip->get($event->getPlayer()->getName())){
 					$this->auth($event->getPlayer(), 1);
 					$event->getPlayer()->sendMessage("§2We remember you by your §6IP §2address!\n".TextFormat::GREEN."You are now logged in.");
@@ -491,12 +495,12 @@ class AuthMePE extends PluginBase implements Listener{
 		if(!$this->isLoggedIn($event->getPlayer())){
 			if($this->isRegistered($event->getPlayer())){
 				$event->setCancelled(true);
-			}else if(isset($t[$event->getPlayer()->getName()]["password"]) && !isset($t[$event->getPlayer()->getName()]["confirm"])){
+			}else if(isset($t[strtolower($event->getPlayer()->getName())]["password"]) && !isset($t[strtolower($event->getPlayer()->getName())]["confirm"])){
 				$event->getPlayer()->sendMessage("Please type your email into chat!");
                 $event->getPlayer()->sendMessage("请在聊天栏里输入你的电子邮件!");
 
                 $event->setCancelled(true);
-			}else if(!$this->isRegistered($event->getPlayer()) && isset($t[$event->getPlayer()->getName()]["confirm"])){
+			}else if(!$this->isRegistered($event->getPlayer()) && isset($t[strtolower($event->getPlayer()->getName())]["confirm"])){
 				$event->getPlayer()->sendMessage("Please type yes/no into chat!");
                 $event->getPlayer()->sendMessage("请在聊天栏输入yes或no!");
 
@@ -576,7 +580,7 @@ class AuthMePE extends PluginBase implements Listener{
 			  			case "changepass":
 			  			case "changepassword":
 			  			  if(isset($args[1]) && isset($args[2])){
-			  			  	$target = $args[1];
+			  			  	$target = strtolower($args[1]);
 			  			  	$t = $this->data->getAll();
 			  			  	if(isset($t[$target])){
 			  			  		$t[$target]["password"] = md5($args[2].$this->salt($args[2]));
@@ -603,7 +607,7 @@ class AuthMePE extends PluginBase implements Listener{
 			  			break;
 			  			case "register":
 			  			  if(isset($args[2])){
-			  			    $target = $args[1];
+			  			    $target = strtolower($args[1]);
 			  			    $password = $args[2];
 			  			    $t = $this->data->getAll();
 			  			    if(!isset($t[$target])){
@@ -651,7 +655,7 @@ class AuthMePE extends PluginBase implements Listener{
 			  			case "email":
 			  			  if(isset($args[2])){
 			  			  	 if(strpos($args[1], "@") !== false){
-			  			  	 	 $target = $args[2];
+			  			  	 	 $target = strtolower($args[2]);
 			  			  	 	 $t = $this->data->getAll();
 			  			  	 	 if(isset($t[$target])){
 			  			  	 	   $t[$target]["email"] = $args[1];
@@ -674,7 +678,7 @@ class AuthMePE extends PluginBase implements Listener{
 			  			break;
 			  			case "getemail":
 			  			  if(isset($args[1])){
-			  			  	$target = $args[1];
+			  			  	$target = strtolower($args[1]);
 			  			  	$t = $this->data->getAll();
 			  			  	if(isset($t[$target])){
 			  			  		if(isset($t[$target]["email"])){
@@ -755,14 +759,14 @@ class AuthMePE extends PluginBase implements Listener{
 			  if($issuer->hasPermission("authmepe.command.changepass")){
 			  	if($issuer instanceof Player){
 			  		if(count($args) == 3){
-			  			if(md5($args[0].$this->salt($args[0])) == $t[$issuer->getName()]["password"]){
+			  			if(md5($args[0].$this->salt($args[0])) == $t[strtolower($issuer->getName())]["password"]){
 			  				if($args[1] == $args[2]){
 			  					$this->getServer()->getPluginManager()->callEvent($event = new PlayerChangePasswordEvent($this, $issuer));
 		            if($event->isCancelled()){
 		       	      $issuer->sendMessage("§cError during changing password!");
 			             return false;
 		            }
-			  					$t[$issuer->getName()]["password"] = md5($args[1].$this->salt($args[1]));
+			  					$t[strtolower($issuer->getName())]["password"] = md5($args[1].$this->salt($args[1]));
 			  					$this->data->setAll($t);
 			  					$this->data->save();
 			  					$issuer->sendMessage(TextFormat::GREEN."Password changed to ".TextFormat::AQUA.TextFormat::BOLD.$args[1]);
@@ -796,7 +800,7 @@ class AuthMePE extends PluginBase implements Listener{
 			  		  if($event->isCancelled() !== true){
 			  		  	if(strpos($args[0], "@") !== false){
 			  		  		$t = $this->data->getAll();
-			  		     $t[$issuer->getName()]["email"] = $args[0];
+			  		     $t[strtolower($issuer->getName())]["email"] = $args[0];
 			  		     $this->data->setAll($t);
 			  		     $this->data->save();
 			  		     $issuer->sendMessage("§aEmail changed successfully!\n§dAddress: §b".$args[0]);
@@ -860,10 +864,10 @@ class AuthMePE extends PluginBase implements Listener{
 			if($this->isRegistered($event->getPlayer())){
 			  $event->getPlayer()->sendTip("§cYou are not allowed to break blocks now!");
 				$event->setCancelled(true);
-			}else if(isset($t[$event->getPlayer()->getName()]["password"]) && !isset($t[$event->getPlayer()->getName()]["confirm"])){
+			}else if(isset($t[strtolower($event->getPlayer()->getName())]["password"]) && !isset($t[strtolower($event->getPlayer()->getName())]["confirm"])){
 				$event->getPlayer()->sendMessage("Type your password again to confirm!");
 				$event->setCancelled(true);
-			}else if(!$this->isRegistered($event->getPlayer()) && isset($t[$event->getPlayer()->getName()]["confirm"])){
+			}else if(!$this->isRegistered($event->getPlayer()) && isset($t[strtolower($event->getPlayer()->getName())]["confirm"])){
 				$event->getPlayer()->sendMessage("Please type yes/no into chat!");
 				$event->setCancelled(true);
 			}else if(!isset($t[$event->getPlayer()->getName()])){
@@ -879,10 +883,10 @@ class AuthMePE extends PluginBase implements Listener{
 			if($this->isRegistered($event->getPlayer())){
 			  $event->getPlayer()->sendTip("§cYou are not allowed to place blocks now!");
 				$event->setCancelled(true);
-			}else if(isset($t[$event->getPlayer()->getName()]["password"]) && !isset($t[$event->getPlayer()->getName()]["confirm"])){
+			}else if(isset($t[strtolower($event->getPlayer()->getName())]["password"]) && !isset($t[strtolower($event->getPlayer()->getName())]["confirm"])){
 				$event->getPlayer()->sendMessage("Type your password again to confirm!");
 				$event->setCancelled(true);
-			}else if(!$this->isRegistered($event->getPlayer()) && isset($t[$event->getPlayer()->getName()]["confirm"])){
+			}else if(!$this->isRegistered($event->getPlayer()) && isset($t[strtolower($event->getPlayer()->getName())]["confirm"])){
 				$event->getPlayer()->sendMessage("Please type yes/no into chat!");
 				$event->setCancelled(true);
 			}else if(!isset($t[$event->getPlayer()->getName()])){
@@ -898,10 +902,10 @@ class AuthMePE extends PluginBase implements Listener{
 			if($this->isRegistered($event->getPlayer())){
 			  $event->getPlayer()->sendTip("§cYou are not allowed to interact now!");
 				$event->setCancelled(true);
-			}else if(isset($t[$event->getPlayer()->getName()]["password"]) && !isset($t[$event->getPlayer()->getName()]["confirm"])){
+			}else if(isset($t[strtolower($event->getPlayer()->getName())]["password"]) && !isset($t[$event->getPlayer()->getName()]["confirm"])){
 				$event->getPlayer()->sendMessage("Type your password again to confirm!");
 				$event->setCancelled(true);
-			}else if(!$this->isRegistered($event->getPlayer()) && isset($t[$event->getPlayer()->getName()]["confirm"])){
+			}else if(!$this->isRegistered($event->getPlayer()) && isset($t[strtolower($event->getPlayer()->getName())]["confirm"])){
 				$event->getPlayer()->sendMessage("Please type yes/no into chat!");
 				$event->setCancelled(true);
 			}else if(!isset($t[$event->getPlayer()->getName()])){
@@ -916,10 +920,10 @@ class AuthMePE extends PluginBase implements Listener{
 		if(!$this->isLoggedIn($event-> getInventory()->getHolder() )){
 			if($this->isRegistered($event-> getInventory()->getHolder() )){
 				$event->setCancelled(true);
-			}else if(isset($t[$event-> getInventory()->getHolder() ->getName()]["password"]) && !isset($t[$event-> getInventory()->getHolder() ->getName()]["confirm"])){
+			}else if(isset($t[strtolower($event-> getInventory()->getHolder() ->getName())]["password"]) && !isset($t[strtolower($event-> getInventory()->getHolder() ->getName())]["confirm"])){
 				$event-> getInventory()->getHolder() ->sendMessage("Type your password again to confirm!");
 				$event->setCancelled(true);
-			}else if(!$this->isRegistered($event-> getInventory()->getHolder() ) && isset($t[$event-> getInventory()->getHolder() ->getName()]["confirm"])){
+			}else if(!$this->isRegistered($event-> getInventory()->getHolder() ) && isset($t[strtolower($event-> getInventory()->getHolder() ->getName())]["confirm"])){
 				$event-> getInventory()->getHolder() ->sendMessage("Please type yes/no into chat!");
 				$event->setCancelled(true);
 			}else if(!isset($t[$event-> getInventory()->getHolder() ->getName()])){
