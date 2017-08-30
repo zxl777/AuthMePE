@@ -244,11 +244,16 @@ class AuthMePE extends PluginBase implements Listener{
 
 		$player->sendMessage(TextFormat::GREEN."你成功登入游戏.");
 
-        //登录成功后，保存一个小写的名字库
+        $this->saveUsername($player);
+	}
+
+    //登录成功后，保存一个小写的名字库
+    public function saveUsername(Player $player)
+    {
         $this->username->set(strtolower($player->getName()), "tm");
         $this->username->save();
-	}
-	
+    }
+
 	public function logout(Player $player){
 		
 		$this->getServer()->getPluginManager()->callEvent($event = new PlayerLogoutEvent($this, $player));
@@ -295,6 +300,8 @@ class AuthMePE extends PluginBase implements Listener{
 
 		$this->data->setAll($t);
 		$this->data->save();
+
+        $this->saveUsername($player);
 	}
 	
 	public function isSessionAvailable(Player $player){
@@ -1283,5 +1290,3 @@ class TokenDeleteTask extends PluginTask{
 		$this->plugin->getServer()->getScheduler()->cancelTask($this->getTaskId());
 	}
 }
-
-?>
