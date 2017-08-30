@@ -844,94 +844,97 @@ class AuthMePE extends PluginBase implements Listener{
 			break;
 		}
 	}
-	
-	public function onDamage(EntityDamageEvent $event){
-		if($event->getEntity() instanceof Player && !$this->isLoggedIn($event->getEntity())){
-			$event->setCancelled(true);
-		}
-	}
-	
-	public function onInvOpen(InventoryOpenEvent $event){
-	  if($this->isLoggedIn($event->getPlayer()) !== true){
-	    $event->getPlayer()->removeWindow($event->getPlayer()->getInventory());
-	    $event->getPlayer()->sendTip("§cYou are not allowed to open your inventory now!");
-	  }
-	}
-	
-	public function onBlockBreak(BlockBreakEvent $event){
-		 $t = $this->data->getAll();
-		if(!$this->isLoggedIn($event->getPlayer())){
-			if($this->isRegistered($event->getPlayer())){
-			  $event->getPlayer()->sendTip("§cYou are not allowed to break blocks now!");
-				$event->setCancelled(true);
-			}else if(isset($t[strtolower($event->getPlayer()->getName())]["password"]) && !isset($t[strtolower($event->getPlayer()->getName())]["confirm"])){
-				$event->getPlayer()->sendMessage("Type your password again to confirm!");
-				$event->setCancelled(true);
-			}else if(!$this->isRegistered($event->getPlayer()) && isset($t[strtolower($event->getPlayer()->getName())]["confirm"])){
-				$event->getPlayer()->sendMessage("Please type yes/no into chat!");
-				$event->setCancelled(true);
-			}else if(!isset($t[$event->getPlayer()->getName()])){
-				$event->getPlayer()->sendMessage("Please type your new password into chat to register.");
-				$event->setCancelled(true);
-			}
-		}
-	}
-	
-	public function onBlockPlace(BlockPlaceEvent $event){
-		 $t = $this->data->getAll();
-		if(!$this->isLoggedIn($event->getPlayer())){
-			if($this->isRegistered($event->getPlayer())){
-			  $event->getPlayer()->sendTip("§cYou are not allowed to place blocks now!");
-				$event->setCancelled(true);
-			}else if(isset($t[strtolower($event->getPlayer()->getName())]["password"]) && !isset($t[strtolower($event->getPlayer()->getName())]["confirm"])){
-				$event->getPlayer()->sendMessage("Type your password again to confirm!");
-				$event->setCancelled(true);
-			}else if(!$this->isRegistered($event->getPlayer()) && isset($t[strtolower($event->getPlayer()->getName())]["confirm"])){
-				$event->getPlayer()->sendMessage("Please type yes/no into chat!");
-				$event->setCancelled(true);
-			}else if(!isset($t[$event->getPlayer()->getName()])){
-				$event->getPlayer()->sendMessage("Please type your new password into chat to register.");
-				$event->setCancelled(true);
-			}
-		}
-	}
-	
-	public function onPlayerInteract(PlayerInteractEvent $event){
-		 $t = $this->data->getAll();
-		if(!$this->isLoggedIn($event->getPlayer())){
-			if($this->isRegistered($event->getPlayer())){
-			  $event->getPlayer()->sendTip("§cYou are not allowed to interact now!");
-				$event->setCancelled(true);
-			}else if(isset($t[strtolower($event->getPlayer()->getName())]["password"]) && !isset($t[$event->getPlayer()->getName()]["confirm"])){
-				$event->getPlayer()->sendMessage("Type your password again to confirm!");
-				$event->setCancelled(true);
-			}else if(!$this->isRegistered($event->getPlayer()) && isset($t[strtolower($event->getPlayer()->getName())]["confirm"])){
-				$event->getPlayer()->sendMessage("Please type yes/no into chat!");
-				$event->setCancelled(true);
-			}else if(!isset($t[$event->getPlayer()->getName()])){
-				$event->getPlayer()->sendMessage("Please type your new password into chat to register.");
-				$event->setCancelled(true);
-			}
-		}
-	}
-	
-	public function onPickupItem(InventoryPickupItemEvent $event){
-		 $t = $this->data->getAll();
-		if(!$this->isLoggedIn($event-> getInventory()->getHolder() )){
-			if($this->isRegistered($event-> getInventory()->getHolder() )){
-				$event->setCancelled(true);
-			}else if(isset($t[strtolower($event-> getInventory()->getHolder() ->getName())]["password"]) && !isset($t[strtolower($event-> getInventory()->getHolder() ->getName())]["confirm"])){
-				$event-> getInventory()->getHolder() ->sendMessage("Type your password again to confirm!");
-				$event->setCancelled(true);
-			}else if(!$this->isRegistered($event-> getInventory()->getHolder() ) && isset($t[strtolower($event-> getInventory()->getHolder() ->getName())]["confirm"])){
-				$event-> getInventory()->getHolder() ->sendMessage("Please type yes/no into chat!");
-				$event->setCancelled(true);
-			}else if(!isset($t[$event-> getInventory()->getHolder() ->getName()])){
-				$event-> getInventory()->getHolder() ->sendMessage("Please type your new password into chat to register.");
-				$event->setCancelled(true);
-			}
-		}
-	}
+
+
+    public function onDamage(EntityDamageEvent $event){
+        if($event->getEntity() instanceof Player && !$this->isLoggedIn($event->getEntity())){
+            $event->setCancelled(true);
+        }
+    }
+
+    public function onInvOpen(InventoryOpenEvent $event){
+        if($this->isLoggedIn($event->getPlayer()) !== true){
+            $event->getPlayer()->removeWindow($event->getPlayer()->getInventory());
+            $event->getPlayer()->sendTip("§cYou are not allowed to open your inventory now!");
+        }
+    }
+
+    public function onBlockBreak(BlockBreakEvent $event){
+        $t = $this->data->getAll();
+        if(!$this->isLoggedIn($event->getPlayer())){
+            if($this->isRegistered($event->getPlayer())){
+                $event->getPlayer()->sendTip("§cYou are not allowed to break blocks now!");
+                $event->setCancelled(true);
+            }else if(isset($t[$event->getPlayer()->getName()]["password"]) && !isset($t[$event->getPlayer()->getName()]["confirm"])){
+                $event->getPlayer()->sendMessage("Type your password again to confirm!");
+                $event->setCancelled(true);
+            }else if(!$this->isRegistered($event->getPlayer()) && isset($t[$event->getPlayer()->getName()]["confirm"])){
+                $event->getPlayer()->sendMessage("Please type yes/no into chat!");
+                $event->setCancelled(true);
+            }else if(!isset($t[$event->getPlayer()->getName()])){
+                $event->getPlayer()->sendMessage("Please type your new password into chat to register.");
+                $event->setCancelled(true);
+            }
+        }
+    }
+
+    public function onBlockPlace(BlockPlaceEvent $event){
+        $t = $this->data->getAll();
+        if(!$this->isLoggedIn($event->getPlayer())){
+            if($this->isRegistered($event->getPlayer())){
+                $event->getPlayer()->sendTip("§cYou are not allowed to place blocks now!");
+                $event->setCancelled(true);
+            }else if(isset($t[$event->getPlayer()->getName()]["password"]) && !isset($t[$event->getPlayer()->getName()]["confirm"])){
+                $event->getPlayer()->sendMessage("Type your password again to confirm!");
+                $event->setCancelled(true);
+            }else if(!$this->isRegistered($event->getPlayer()) && isset($t[$event->getPlayer()->getName()]["confirm"])){
+                $event->getPlayer()->sendMessage("Please type yes/no into chat!");
+                $event->setCancelled(true);
+            }else if(!isset($t[$event->getPlayer()->getName()])){
+                $event->getPlayer()->sendMessage("Please type your new password into chat to register.");
+                $event->setCancelled(true);
+            }
+        }
+    }
+
+    public function onPlayerInteract(PlayerInteractEvent $event){
+        $t = $this->data->getAll();
+        if(!$this->isLoggedIn($event->getPlayer())){
+            if($this->isRegistered($event->getPlayer())){
+                $event->getPlayer()->sendTip("§cYou are not allowed to interact now!");
+                $event->setCancelled(true);
+            }else if(isset($t[$event->getPlayer()->getName()]["password"]) && !isset($t[$event->getPlayer()->getName()]["confirm"])){
+                $event->getPlayer()->sendMessage("Type your password again to confirm!");
+                $event->setCancelled(true);
+            }else if(!$this->isRegistered($event->getPlayer()) && isset($t[$event->getPlayer()->getName()]["confirm"])){
+                $event->getPlayer()->sendMessage("Please type yes/no into chat!");
+                $event->setCancelled(true);
+            }else if(!isset($t[$event->getPlayer()->getName()])){
+                $event->getPlayer()->sendMessage("Please type your new password into chat to register.");
+                $event->setCancelled(true);
+            }
+        }
+    }
+
+    public function onPickupItem(InventoryPickupItemEvent $event){
+        $t = $this->data->getAll();
+        if(!$this->isLoggedIn($event-> getInventory()->getHolder() )){
+            if($this->isRegistered($event-> getInventory()->getHolder() )){
+                $event->setCancelled(true);
+            }else if(isset($t[$event-> getInventory()->getHolder() ->getName()]["password"]) && !isset($t[$event-> getInventory()->getHolder() ->getName()]["confirm"])){
+                $event-> getInventory()->getHolder() ->sendMessage("Type your password again to confirm!");
+                $event->setCancelled(true);
+            }else if(!$this->isRegistered($event-> getInventory()->getHolder() ) && isset($t[$event-> getInventory()->getHolder() ->getName()]["confirm"])){
+                $event-> getInventory()->getHolder() ->sendMessage("Please type yes/no into chat!");
+                $event->setCancelled(true);
+            }else if(!isset($t[$event-> getInventory()->getHolder() ->getName()])){
+                $event-> getInventory()->getHolder() ->sendMessage("Please type your new password into chat to register.");
+                $event->setCancelled(true);
+            }
+        }
+    }
+
+
 	
 	public function getLoggedIn(){
 		return $this->login;
